@@ -53,8 +53,8 @@ echo ""
 echo -e " ${YW}Bridge configuration${CL}"
 echo "─────────────────────────────────────────────────────"
 
-read -rp "  CIC IP address             [192.168.1.47]: " CIC_IP
-CIC_IP="${CIC_IP:-192.168.1.47}"
+read -rp "  CIC IP address                          : " CIC_IP
+[[ -n "${CIC_IP}" ]] || { msg_error "CIC IP is required."; exit 1; }
 
 read -rp "  InfluxDB 3 IP address                   : " INFLUXDB_IP
 [[ -n "${INFLUXDB_IP}" ]] || { msg_error "InfluxDB IP is required."; exit 1; }
