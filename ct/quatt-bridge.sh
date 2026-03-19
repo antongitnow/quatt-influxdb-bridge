@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Quatt CIC → InfluxDB 3 Bridge  –  Proxmox VE LXC Helper
+# Quatt CIC → InfluxDB Bridge  –  Proxmox VE LXC Helper  (supports v2 & v3)
 # Usage: bash -c "$(curl -fsSL https://raw.githubusercontent.com/antongitnow/quatt-influxdb-bridge/main/ct/quatt-bridge.sh)"
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
@@ -32,7 +32,7 @@ header_info() {
  ╚██████╔╝╚██████╔╝██║  ██║   ██║      ██║
   ╚══▀▀═╝  ╚═════╝ ╚═╝  ╚═╝   ╚═╝      ╚═╝
 
- CIC → InfluxDB 3 Bridge  |  Proxmox VE Helper
+ CIC → InfluxDB Bridge (v2 / v3)  |  Proxmox VE Helper
 EOF
 }
 
@@ -53,23 +53,42 @@ echo ""
 echo -e " ${YW}Bridge configuration${CL}"
 echo "─────────────────────────────────────────────────────"
 
-read -rp "  CIC IP address                          : " CIC_IP
+read -rp "  Quatt CIC IP address                    : " CIC_IP
 [[ -n "${CIC_IP}" ]] || { msg_error "CIC IP is required."; exit 1; }
 
-read -rp "  InfluxDB 3 IP address                   : " INFLUXDB_IP
+read -rp "  InfluxDB IP address                     : " INFLUXDB_IP
 [[ -n "${INFLUXDB_IP}" ]] || { msg_error "InfluxDB IP is required."; exit 1; }
 
 read -rp "  InfluxDB port                    [8086]: " INFLUXDB_PORT
 INFLUXDB_PORT="${INFLUXDB_PORT:-8086}"
 
-read -rp "  InfluxDB database               [quatt]: " INFLUXDB_DB
+while true; do
+  read -rp "  InfluxDB version                    [2/3]: " INFLUXDB_VERSION
+  INFLUXDB_VERSION="${INFLUXDB_VERSION:-3}"
+  [[ "${INFLUXDB_VERSION}" == "2" || "${INFLUXDB_VERSION}" == "3" ]] && break
+  msg_error "Please enter 2 or 3."
+done
+
+# v2 needs an org name; v3 does not use orgs
+INFLUXDB_ORG=""
+if [[ "${INFLUXDB_VERSION}" == "2" ]]; then
+  read -rp "  InfluxDB organisation name              : " INFLUXDB_ORG
+  [[ -n "${INFLUXDB_ORG}" ]] || { msg_error "Organisation name is required for InfluxDB v2."; exit 1; }
+fi
+
+# v2 calls it a "bucket", v3 calls it a "database"
+if [[ "${INFLUXDB_VERSION}" == "2" ]]; then
+  read -rp "  InfluxDB bucket                 [quatt]: " INFLUXDB_DB
+else
+  read -rp "  InfluxDB database               [quatt]: " INFLUXDB_DB
+fi
 INFLUXDB_DB="${INFLUXDB_DB:-quatt}"
 
 read -rsp "  InfluxDB API token (hidden)             : " INFLUXDB_TOKEN
 echo ""
 [[ -n "${INFLUXDB_TOKEN}" ]] || { msg_error "InfluxDB API token is required."; exit 1; }
 
-read -rp "  Poll interval seconds             [10]: " POLL_INTERVAL
+read -rp "  Poll interval seconds            [10]: " POLL_INTERVAL
 POLL_INTERVAL="${POLL_INTERVAL:-10}"
 [[ "${POLL_INTERVAL}" =~ ^[0-9]+$ ]] || { msg_error "Poll interval must be a positive integer."; exit 1; }
 
@@ -105,7 +124,11 @@ echo "  Bridge         : ${CT_BRIDGE}"
 echo "  RAM / Cores    : ${CT_RAM}MB / ${CT_CORES}"
 echo "  Disk           : ${CT_DISK}GB"
 echo "  CIC IP         : ${CIC_IP}"
-echo "  InfluxDB       : ${INFLUXDB_IP}:${INFLUXDB_PORT}  database=${INFLUXDB_DB}"
+if [[ "${INFLUXDB_VERSION}" == "2" ]]; then
+  echo "  InfluxDB v2    : ${INFLUXDB_IP}:${INFLUXDB_PORT}  org=${INFLUXDB_ORG}  bucket=${INFLUXDB_DB}"
+else
+  echo "  InfluxDB v3    : ${INFLUXDB_IP}:${INFLUXDB_PORT}  database=${INFLUXDB_DB}"
+fi
 echo "  Token          : $(echo "${INFLUXDB_TOKEN}" | head -c 8)…"
 echo "  Poll interval  : ${POLL_INTERVAL}s"
 echo ""
@@ -149,8 +172,13 @@ pct create "${CTID}" "${TEMPLATE}" \
 msg_ok "Container ${CTID} created."
 
 # ── Write config into container description (for reference) ───────────────────
-pct set "${CTID}" --description \
-  "Quatt CIC → InfluxDB 3 bridge. CIC: ${CIC_IP}  InfluxDB: ${INFLUXDB_IP}:${INFLUXDB_PORT}  database: ${INFLUXDB_DB}"
+if [[ "${INFLUXDB_VERSION}" == "2" ]]; then
+  pct set "${CTID}" --description \
+    "Quatt CIC → InfluxDB 2 bridge. CIC: ${CIC_IP}  InfluxDB: ${INFLUXDB_IP}:${INFLUXDB_PORT}  org: ${INFLUXDB_ORG}  bucket: ${INFLUXDB_DB}"
+else
+  pct set "${CTID}" --description \
+    "Quatt CIC → InfluxDB 3 bridge. CIC: ${CIC_IP}  InfluxDB: ${INFLUXDB_IP}:${INFLUXDB_PORT}  database: ${INFLUXDB_DB}"
+fi
 
 # ── Start container ────────────────────────────────────────────────────────────
 msg_info "Starting container…"
@@ -176,6 +204,8 @@ pct exec "${CTID}" -- bash -c "cat > /etc/quatt-bridge/config.env" <<ENVEOF
 CIC_IP=${CIC_IP}
 INFLUXDB_IP=${INFLUXDB_IP}
 INFLUXDB_PORT=${INFLUXDB_PORT}
+INFLUXDB_VERSION=${INFLUXDB_VERSION}
+INFLUXDB_ORG=${INFLUXDB_ORG}
 INFLUXDB_DB=${INFLUXDB_DB}
 INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
 POLL_INTERVAL=${POLL_INTERVAL}
