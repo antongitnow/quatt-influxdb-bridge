@@ -165,6 +165,10 @@ for i in $(seq 1 20); do
   sleep 2
 done
 
+msg_info "Installing curl…"
+pct exec "${CTID}" -- bash -c "apt-get update -qq && apt-get install -y -qq curl"
+msg_ok "curl installed."
+
 # ── Write bridge config inside container ──────────────────────────────────────
 msg_info "Writing bridge configuration…"
 pct exec "${CTID}" -- bash -c "mkdir -p /etc/quatt-bridge"
@@ -182,7 +186,10 @@ msg_ok "Configuration written."
 # ── Run install script inside container ───────────────────────────────────────
 msg_info "Running installer inside container (this takes ~60s)…"
 pct exec "${CTID}" -- bash -c \
-  "curl -fsSL ${REPO_RAW}/install/quatt-bridge-install.sh | bash"
+  "curl -fsSL ${REPO_RAW}/install/quatt-bridge-install.sh | bash" || {
+  msg_error "Installer failed. Check logs: pct exec ${CTID} -- journalctl -u quatt-bridge"
+  exit 1
+}
 msg_ok "Installer finished."
 
 # ── Report ────────────────────────────────────────────────────────────────────
