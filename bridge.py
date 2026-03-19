@@ -156,22 +156,45 @@ def _v2_headers(content_type: str = "text/plain; charset=utf-8") -> dict:
     }
 
 
-def ensure_database_v2() -> None:
-    """Create the InfluxDB v2 bucket if it does not already exist."""
-    # 1. Resolve org → orgID
+def _is_hex_id(value: str) -> bool:
+    """Check if the value looks like a 16-char hex org ID."""
+    return len(value) == 16 and all(c in "0123456789abcdef" for c in value)
+
+
+def _resolve_org_id() -> str:
+    """Resolve INFLUXDB_ORG to an orgID. Accepts either name or hex ID."""
+    if _is_hex_id(INFLUXDB_ORG):
+        # Already an ID — verify it exists
+        resp = requests.get(
+            f"{INFLUX_BASE}/api/v2/orgs/{INFLUXDB_ORG}",
+            headers=_v2_headers("application/json"),
+            timeout=10,
+        )
+        _check_response(resp, "v2 org lookup by ID")
+        log.info("Resolved org ID: %s (name: %s)", INFLUXDB_ORG, resp.json().get("name", "?"))
+        return INFLUXDB_ORG
+
+    # Look up by name
     resp = requests.get(
         f"{INFLUX_BASE}/api/v2/orgs",
         headers=_v2_headers("application/json"),
         params={"org": INFLUXDB_ORG},
         timeout=10,
     )
-    _check_response(resp, "v2 org lookup")
+    _check_response(resp, "v2 org lookup by name")
     orgs = resp.json().get("orgs", [])
     if not orgs:
         raise RuntimeError(f"Organisation '{INFLUXDB_ORG}' not found in InfluxDB v2")
     org_id = orgs[0]["id"]
+    log.info("Resolved org '%s' → ID: %s", INFLUXDB_ORG, org_id)
+    return org_id
 
-    # 2. Create bucket (422 = already exists)
+
+def ensure_database_v2() -> None:
+    """Create the InfluxDB v2 bucket if it does not already exist."""
+    org_id = _resolve_org_id()
+
+    # Create bucket (422 = already exists)
     resp = requests.post(
         f"{INFLUX_BASE}/api/v2/buckets",
         headers=_v2_headers("application/json"),
