@@ -133,6 +133,20 @@ def build_lines(data: dict) -> list[str]:
     return lines
 
 
+# ── Shared helpers ─────────────────────────────────────────────────────────────
+
+def _check_response(resp: requests.Response, context: str) -> None:
+    """Log full details and raise on non-2xx responses."""
+    if resp.ok:
+        return
+    body = resp.text[:500] if resp.text else "<empty>"
+    log.error(
+        "%s failed: HTTP %d %s — URL: %s — Body: %s",
+        context, resp.status_code, resp.reason, resp.url, body,
+    )
+    resp.raise_for_status()
+
+
 # ── InfluxDB v2 ────────────────────────────────────────────────────────────────
 
 def _v2_headers(content_type: str = "text/plain; charset=utf-8") -> dict:
@@ -151,7 +165,7 @@ def ensure_database_v2() -> None:
         params={"org": INFLUXDB_ORG},
         timeout=10,
     )
-    resp.raise_for_status()
+    _check_response(resp, "v2 org lookup")
     orgs = resp.json().get("orgs", [])
     if not orgs:
         raise RuntimeError(f"Organisation '{INFLUXDB_ORG}' not found in InfluxDB v2")
@@ -167,7 +181,7 @@ def ensure_database_v2() -> None:
     if resp.status_code in (200, 201, 422):
         log.info("InfluxDB v2 bucket '%s' ready (org: %s).", INFLUXDB_DB, INFLUXDB_ORG)
     else:
-        resp.raise_for_status()
+        _check_response(resp, "v2 bucket create")
 
 
 def write_to_influx_v2(lines: list[str]) -> None:
@@ -179,7 +193,7 @@ def write_to_influx_v2(lines: list[str]) -> None:
         data=payload.encode("utf-8"),
         timeout=10,
     )
-    resp.raise_for_status()
+    _check_response(resp, "v2 write")
 
 
 # ── InfluxDB v3 ────────────────────────────────────────────────────────────────
@@ -202,7 +216,7 @@ def ensure_database_v3() -> None:
     if resp.status_code in (200, 201, 409):  # 409 = already exists
         log.info("InfluxDB v3 database '%s' ready.", INFLUXDB_DB)
     else:
-        resp.raise_for_status()
+        _check_response(resp, "v3 database create")
 
 
 def write_to_influx_v3(lines: list[str]) -> None:
@@ -214,7 +228,7 @@ def write_to_influx_v3(lines: list[str]) -> None:
         data=payload.encode("utf-8"),
         timeout=10,
     )
-    resp.raise_for_status()
+    _check_response(resp, "v3 write")
 
 
 # ── Dispatch ───────────────────────────────────────────────────────────────────
