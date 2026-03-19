@@ -200,16 +200,17 @@ msg_ok "curl installed."
 # ── Write bridge config inside container ──────────────────────────────────────
 msg_info "Writing bridge configuration…"
 pct exec "${CTID}" -- bash -c "mkdir -p /etc/quatt-bridge"
-pct exec "${CTID}" -- bash -c "cat > /etc/quatt-bridge/config.env" <<ENVEOF
-CIC_IP=${CIC_IP}
-INFLUXDB_IP=${INFLUXDB_IP}
-INFLUXDB_PORT=${INFLUXDB_PORT}
-INFLUXDB_VERSION=${INFLUXDB_VERSION}
-INFLUXDB_ORG=${INFLUXDB_ORG}
-INFLUXDB_DB=${INFLUXDB_DB}
-INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
-POLL_INTERVAL=${POLL_INTERVAL}
-ENVEOF
+# Write each value with printf to avoid shell expansion of special chars in token
+{
+  printf 'CIC_IP=%s\n'           "${CIC_IP}"
+  printf 'INFLUXDB_IP=%s\n'      "${INFLUXDB_IP}"
+  printf 'INFLUXDB_PORT=%s\n'    "${INFLUXDB_PORT}"
+  printf 'INFLUXDB_VERSION=%s\n' "${INFLUXDB_VERSION}"
+  printf 'INFLUXDB_ORG=%s\n'     "${INFLUXDB_ORG}"
+  printf 'INFLUXDB_DB=%s\n'      "${INFLUXDB_DB}"
+  printf 'INFLUXDB_TOKEN=%s\n'   "${INFLUXDB_TOKEN}"
+  printf 'POLL_INTERVAL=%s\n'    "${POLL_INTERVAL}"
+} | pct exec "${CTID}" -- bash -c "cat > /etc/quatt-bridge/config.env"
 pct exec "${CTID}" -- chmod 600 /etc/quatt-bridge/config.env
 msg_ok "Configuration written."
 

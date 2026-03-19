@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ─────────────────────────────────────────────────────────────────────────────
-# Quatt CIC → InfluxDB 3 Bridge  –  Container installer
+# Quatt CIC → InfluxDB Bridge  –  Container installer  (supports v2 & v3)
 # Runs INSIDE the LXC container. Called by ct/quatt-bridge.sh.
 # ─────────────────────────────────────────────────────────────────────────────
 set -euo pipefail
