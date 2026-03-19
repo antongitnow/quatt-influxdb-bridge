@@ -17,14 +17,27 @@ msg_error() { echo -e " ${RD}[✗]${CL} $*"; }
   exit 1
 }
 
-# ── System update + Python ─────────────────────────────────────────────────────
-msg_info "Updating system packages…"
+# ── Minimal Python install (no full upgrade) ──────────────────────────────────
+msg_info "Installing minimal dependencies…"
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -qq
-apt-get upgrade -y -qq
 apt-get install -y -qq --no-install-recommends \
-  python3 python3-pip python3-venv curl ca-certificates
-msg_ok "System ready."
+  python3-minimal python3-pip python3-venv ca-certificates
+msg_ok "Dependencies installed."
+
+# ── Strip bloat from base template ────────────────────────────────────────────
+msg_info "Removing unnecessary packages…"
+apt-get purge -y -qq --auto-remove \
+  postfix man-db manpages vim-tiny vim-common nano wget \
+  rsync bind9-dnsutils bind9-host tcpdump nftables \
+  ssh openssh-server openssh-client openssh-sftp-server \
+  ubuntu-release-upgrader-core ufw irqbalance ntfs-3g \
+  apparmor dmidecode kbd less iputils-tracepath pci.ids \
+  busybox-static networkd-dispatcher 2>/dev/null || true
+apt-get autoremove -y -qq
+apt-get clean
+rm -rf /var/lib/apt/lists/* /var/log/*.log /tmp/*
+msg_ok "System trimmed."
 
 # ── App directory ──────────────────────────────────────────────────────────────
 msg_info "Installing bridge application…"
@@ -33,9 +46,9 @@ mkdir -p /opt/quatt-bridge
 curl -fsSL "${REPO_RAW}/bridge.py"          -o /opt/quatt-bridge/bridge.py
 curl -fsSL "${REPO_RAW}/requirements.txt"   -o /opt/quatt-bridge/requirements.txt
 
-python3 -m venv /opt/quatt-bridge/venv
-/opt/quatt-bridge/venv/bin/pip install --quiet --upgrade pip
-/opt/quatt-bridge/venv/bin/pip install --quiet -r /opt/quatt-bridge/requirements.txt
+python3 -m venv --without-pip /opt/quatt-bridge/venv
+/opt/quatt-bridge/venv/bin/python3 -m ensurepip --default-pip 2>/dev/null
+/opt/quatt-bridge/venv/bin/pip install --quiet --no-cache-dir -r /opt/quatt-bridge/requirements.txt
 msg_ok "Bridge application installed."
 
 # ── Service user ───────────────────────────────────────────────────────────────

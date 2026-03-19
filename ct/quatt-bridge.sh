@@ -11,8 +11,8 @@ APP_ID="quatt-bridge"
 UBUNTU_VERSION="22.04"
 CT_HOSTNAME="quatt-bridge"
 CT_CORES=1
-CT_RAM=256
-CT_DISK=2    # GB
+CT_RAM=128
+CT_DISK=1    # GB
 CT_BRIDGE="vmbr0"
 
 # ── Colours ───────────────────────────────────────────────────────────────────
