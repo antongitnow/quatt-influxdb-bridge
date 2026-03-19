@@ -62,7 +62,7 @@ read -rp "  InfluxDB 3 IP address                   : " INFLUXDB_IP
 read -rp "  InfluxDB port                    [8086]: " INFLUXDB_PORT
 INFLUXDB_PORT="${INFLUXDB_PORT:-8086}"
 
-read -rp "  InfluxDB bucket / database      [quatt]: " INFLUXDB_DB
+read -rp "  InfluxDB database               [quatt]: " INFLUXDB_DB
 INFLUXDB_DB="${INFLUXDB_DB:-quatt}"
 
 read -rsp "  InfluxDB API token (hidden)             : " INFLUXDB_TOKEN
@@ -105,7 +105,7 @@ echo "  Bridge         : ${CT_BRIDGE}"
 echo "  RAM / Cores    : ${CT_RAM}MB / ${CT_CORES}"
 echo "  Disk           : ${CT_DISK}GB"
 echo "  CIC IP         : ${CIC_IP}"
-echo "  InfluxDB       : ${INFLUXDB_IP}:${INFLUXDB_PORT}  bucket=${INFLUXDB_DB}"
+echo "  InfluxDB       : ${INFLUXDB_IP}:${INFLUXDB_PORT}  database=${INFLUXDB_DB}"
 echo "  Token          : $(echo "${INFLUXDB_TOKEN}" | head -c 8)…"
 echo "  Poll interval  : ${POLL_INTERVAL}s"
 echo ""
@@ -150,7 +150,7 @@ msg_ok "Container ${CTID} created."
 
 # ── Write config into container description (for reference) ───────────────────
 pct set "${CTID}" --description \
-  "Quatt CIC → InfluxDB 3 bridge. CIC: ${CIC_IP}  InfluxDB: ${INFLUXDB_IP}:${INFLUXDB_PORT}/${INFLUXDB_DB}"
+  "Quatt CIC → InfluxDB 3 bridge. CIC: ${CIC_IP}  InfluxDB: ${INFLUXDB_IP}:${INFLUXDB_PORT}  database: ${INFLUXDB_DB}"
 
 # ── Start container ────────────────────────────────────────────────────────────
 msg_info "Starting container…"

@@ -27,8 +27,10 @@ INFLUXDB_DB    = os.environ.get("INFLUXDB_DB", "quatt")
 INFLUXDB_TOKEN = os.environ["INFLUXDB_TOKEN"]
 POLL_INTERVAL  = int(os.environ.get("POLL_INTERVAL", "10"))
 
-CIC_URL      = f"http://{CIC_IP}:8080/beta/feed/data.json"
-INFLUX_WRITE = f"http://{INFLUXDB_IP}:{INFLUXDB_PORT}/api/v2/write"
+CIC_URL        = f"http://{CIC_IP}:8080/beta/feed/data.json"
+INFLUX_BASE    = f"http://{INFLUXDB_IP}:{INFLUXDB_PORT}"
+INFLUX_WRITE   = f"{INFLUX_BASE}/api/v3/write_lp"
+INFLUX_DB_API  = f"{INFLUX_BASE}/api/v3/configure/database"
 
 # Sections to skip entirely
 SKIP_SECTIONS = {"time", "thread"}
@@ -105,20 +107,33 @@ def fetch_cic() -> dict:
     return resp.json()
 
 
+def _auth_headers(content_type: str = "text/plain; charset=utf-8") -> dict:
+    return {
+        "Authorization": f"Bearer {INFLUXDB_TOKEN}",
+        "Content-Type":  content_type,
+    }
+
+
+def ensure_database() -> None:
+    """Create the InfluxDB 3 database if it does not already exist."""
+    resp = requests.post(
+        INFLUX_DB_API,
+        headers=_auth_headers("application/json"),
+        json={"db": INFLUXDB_DB},
+        timeout=10,
+    )
+    if resp.status_code in (200, 201, 409):  # 409 = already exists
+        log.info("InfluxDB database '%s' ready.", INFLUXDB_DB)
+    else:
+        resp.raise_for_status()
+
+
 def write_to_influx(lines: list[str]) -> None:
     payload = "\n".join(lines)
-    headers = {
-        "Authorization": f"Token {INFLUXDB_TOKEN}",
-        "Content-Type":  "text/plain; charset=utf-8",
-    }
-    params = {
-        "bucket":    INFLUXDB_DB,
-        "precision": "ns",
-    }
     resp = requests.post(
         INFLUX_WRITE,
-        headers=headers,
-        params=params,
+        headers=_auth_headers(),
+        params={"db": INFLUXDB_DB, "precision": "nanoseconds"},
         data=payload.encode("utf-8"),
         timeout=10,
     )
@@ -161,10 +176,12 @@ def build_lines(data: dict) -> list[str]:
 
 
 def run() -> None:
-    log.info("Quatt CIC → InfluxDB bridge starting")
-    log.info("  CIC URL : %s", CIC_URL)
-    log.info("  InfluxDB: %s:%s  bucket=%s", INFLUXDB_IP, INFLUXDB_PORT, INFLUXDB_DB)
-    log.info("  Interval: %ds", POLL_INTERVAL)
+    log.info("Quatt CIC → InfluxDB 3 bridge starting")
+    log.info("  CIC URL  : %s", CIC_URL)
+    log.info("  InfluxDB : %s:%s  database=%s", INFLUXDB_IP, INFLUXDB_PORT, INFLUXDB_DB)
+    log.info("  Interval : %ds", POLL_INTERVAL)
+
+    ensure_database()
 
     consecutive_errors = 0
 
