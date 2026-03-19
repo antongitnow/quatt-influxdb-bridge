@@ -147,7 +147,7 @@ def build_lines(data: dict) -> list[str]:
         if not isinstance(value, dict):
             continue  # skip null sections
 
-        measurement = f"cic_{section}"
+        measurement = f"quatt_{section}"
         fields, tags = flatten(value)
 
         if not fields:
