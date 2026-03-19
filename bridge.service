@@ -1,0 +1,17 @@
+[Unit]
+Description=Quatt CIC → InfluxDB 3 bridge
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=bridge
+EnvironmentFile=/etc/quatt-bridge/config.env
+ExecStart=/opt/quatt-bridge/venv/bin/python /opt/quatt-bridge/bridge.py
+Restart=on-failure
+RestartSec=15s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
