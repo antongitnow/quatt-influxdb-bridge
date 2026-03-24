@@ -4,19 +4,27 @@
 ![License: MIT](https://img.shields.io/badge/license-MIT-green)
 ![InfluxDB v2/v3](https://img.shields.io/badge/InfluxDB-v2%20%7C%20v3-purple)
 
-Poll your **Quatt heat pump** and stream real-time performance data into **InfluxDB** — ready to visualise in Grafana, explore with SQL, or feed into your home-energy dashboard.
+Your Quatt heat pump already collects detailed telemetry — compressor power, flow temperatures, boiler status, COP metrics — but it's locked inside a local JSON API with no built-in way to track trends, set alerts, or correlate with your solar production and energy usage.
+
+This bridge **unlocks that data** by streaming it into **InfluxDB**, the industry-standard time-series database. Once it's there, the possibilities open up:
+
+- **Build dashboards** in Grafana to monitor your heat pump's performance in real time
+- **Track efficiency over time** — spot COP degradation, compare heating seasons, or correlate with outdoor temperature
+- **Set up alerts** — get notified when flow temperatures drop unexpectedly or the boiler kicks in too often
+- **Combine with other data** — overlay solar production, electricity prices, or indoor climate sensors for a complete energy picture
+- **Query with SQL** — run ad-hoc analysis directly on your data, no vendor lock-in
+
+Works with **InfluxDB v2** and **v3**. Ships as a single Python script with a **one-command Proxmox VE installer** that creates a dedicated, minimal LXC container.
 
 <a href="https://influxdb-dashboard.netlify.app/">
   <img src="docs/dashboard.png" alt="InfluxDB Dashboard showing heat pump, temperature, humidity, power and solar data" width="300">
 </a>
 
-<sub>Visualise your InfluxDB data with the <a href="https://influxdb-dashboard.netlify.app/">InfluxDB Dashboard app</a></sub>
-
-Works with **InfluxDB v2** and **v3**. Ships as a single Python script with a **one-command Proxmox VE installer** that creates a dedicated, minimal LXC container.
+<sub>Visualise your InfluxDB data on mobile with the <a href="https://influxdb-dashboard.netlify.app/">InfluxDB Dashboard app</a></sub>
 
 ---
 
-## Why?
+## Why This Bridge?
 
 Quatt heat pumps expose a local JSON API on the CIC, but the data isn't easy to graph, alert on, or correlate with other home-energy metrics out of the box. This bridge closes that gap:
 
