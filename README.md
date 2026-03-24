@@ -1,8 +1,26 @@
 # Quatt CIC to InfluxDB Bridge
 
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
+![InfluxDB v2/v3](https://img.shields.io/badge/InfluxDB-v2%20%7C%20v3-purple)
+
 Poll your **Quatt heat pump** and stream real-time performance data into **InfluxDB** — ready to visualise in Grafana, explore with SQL, or feed into your home-energy dashboard.
 
+<!-- TODO: Replace with your own dashboard screenshot -->
+<!-- ![Dashboard screenshot](docs/dashboard.png) -->
+
 Works with **InfluxDB v2** and **v3**. Ships as a single Python script with a **one-command Proxmox VE installer** that creates a dedicated, minimal LXC container.
+
+---
+
+## Why?
+
+Quatt heat pumps expose a local JSON API on the CIC, but the data isn't easy to graph, alert on, or correlate with other home-energy metrics out of the box. This bridge closes that gap:
+
+- **No cloud dependency** — everything stays on your local network
+- **No manual field mapping** — the bridge auto-discovers every data section the CIC exposes and flattens nested JSON into InfluxDB measurements automatically
+- **Instant time-series** — data lands in InfluxDB with nanosecond precision, ready for Grafana dashboards, SQL queries, or alerting rules
+- **Set and forget** — runs as a systemd service with automatic recovery, in a lightweight LXC container that uses just 128 MB RAM
 
 ---
 
@@ -154,11 +172,14 @@ Some ideas for contributions:
 - Docker / Docker Compose setup
 - Configurable measurement naming
 
+## Related Projects
+
+- [Quatt](https://www.quatt.io/) — the hybrid heat pump this bridge is built for
+- [InfluxDB](https://www.influxdata.com/) — time-series database for metrics and telemetry
+- [Grafana](https://grafana.com/) — dashboarding and alerting for InfluxDB data
+- [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE) — LXC helper script inspiration
+- [Tweakers Quatt topic](https://gathering.tweakers.net/forum/list_messages/2088656) — active Dutch community discussion on Quatt heat pumps
+
 ## License
 
 MIT
-
-## Acknowledgements
-
-- [Quatt](https://www.quatt.io/) for making heat pumps with a local API
-- [community-scripts/ProxmoxVE](https://github.com/community-scripts/ProxmoxVE) for LXC helper script inspiration
