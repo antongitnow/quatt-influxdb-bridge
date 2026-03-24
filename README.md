@@ -20,7 +20,7 @@ Works with **InfluxDB v2** and **v3**. Ships as a single Python script with a **
   <img src="docs/dashboard.png" alt="InfluxDB Dashboard showing heat pump, temperature, humidity, power and solar data" width="300">
 </a>
 
-<sub>Visualise your InfluxDB data on mobile with the <a href="https://influxdb-dashboard.netlify.app/">InfluxDB Dashboard app</a></sub>
+<sub>This is how I monitor my own setup — built with the <a href="https://influxdb-dashboard.netlify.app/">InfluxDB Dashboard app</a></sub>
 
 ---
 
