@@ -6,8 +6,11 @@
 
 Poll your **Quatt heat pump** and stream real-time performance data into **InfluxDB** — ready to visualise in Grafana, explore with SQL, or feed into your home-energy dashboard.
 
-<!-- TODO: Replace with your own dashboard screenshot -->
-<!-- ![Dashboard screenshot](docs/dashboard.png) -->
+<a href="https://influxdb-dashboard.netlify.app/">
+  <img src="docs/dashboard.png" alt="InfluxDB Dashboard showing heat pump, temperature, humidity, power and solar data" width="300">
+</a>
+
+<sub>Visualise your InfluxDB data with the <a href="https://influxdb-dashboard.netlify.app/">InfluxDB Dashboard app</a></sub>
 
 Works with **InfluxDB v2** and **v3**. Ships as a single Python script with a **one-command Proxmox VE installer** that creates a dedicated, minimal LXC container.
 
